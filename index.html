@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="魔音工坊 — 纯本地运行的 AI 在线配音工具：粘贴文案、挑选音色、一键合成、试听下载。底层调用阶跃星辰 stepaudio-3-tts。" />
+  <meta name="color-scheme" content="light" />
+  <title>魔音工坊 · AI 在线配音</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c5cff'/%3E%3Cstop offset='1' stop-color='%23ff4d94'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cg stroke='%23fff' stroke-width='2.7' stroke-linecap='round'%3E%3Cline x1='7' y1='13' x2='7' y2='19'/%3E%3Cline x1='12' y1='9' x2='12' y2='23'/%3E%3Cline x1='16' y1='5' x2='16' y2='27'/%3E%3Cline x1='20' y1='9' x2='20' y2='23'/%3E%3Cline x1='25' y1='13' x2='25' y2='19'/%3E%3C/g%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ═══════════════ 导航栏 ═══════════════ -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="#" aria-label="魔音工坊首页">
+        <span class="brand-logo" aria-hidden="true">
+          <svg class="brand-wave" viewBox="0 0 32 32">
+            <g stroke="currentColor" stroke-width="2.9" stroke-linecap="round" fill="none">
+              <line x1="6"  y1="13" x2="6"  y2="19" />
+              <line x1="11" y1="9"  x2="11" y2="23" />
+              <line x1="16" y1="4.5" x2="16" y2="27.5" />
+              <line x1="21" y1="9"  x2="21" y2="23" />
+              <line x1="26" y1="13" x2="26" y2="19" />
+            </g>
+          </svg>
+        </span>
+        <span class="brand-text">
+          <span class="brand-name">魔音工坊</span>
+          <span class="brand-sub">MoYin Workshop</span>
+        </span>
+      </a>
+
+      <nav class="topnav" aria-label="主导航">
+        <span class="model-badge" title="底层模型（固定）">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1a4 4 0 0 1 4 4v3a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4Z" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M2.5 8v.5a5.5 5.5 0 0 0 11 0V8M8 14v2" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          <span class="mono">stepaudio-3-tts</span>
+        </span>
+        <button type="button" class="nav-btn" id="btnHistory" aria-label="打开历史记录">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v6l4 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 17.5a7.5 7.5 0 1 1 7.5-7.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M17.5 3.5v3.6h-3.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="nav-btn-text">历史</span>
+        </button>
+        <button type="button" class="nav-btn" id="btnSettings" aria-label="打开设置">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="2.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 1.8v2.4M10 15.8v2.4M18.2 10h-2.4M4.2 10H1.8M15.8 4.2l-1.7 1.7M5.9 14.1l-1.7 1.7M15.8 15.8l-1.7-1.7M5.9 5.9 4.2 4.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <span class="nav-btn-text">设置</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ═══════════════ 主区 ═══════════════ -->
+  <main class="layout">
+
+    <!-- ── 左列：文案 + 调节 ── -->
+    <section class="col-left">
+
+      <!-- ① 文案输入 -->
+      <div class="card panel-text anim-rise" style="--d:0">
+        <div class="card-head">
+          <h2 class="card-title">
+            <span class="title-dot" aria-hidden="true"></span>配音文案
+          </h2>
+          <div class="head-actions">
+            <button type="button" class="ghost-btn" id="btnExample">填入示例</button>
+            <button type="button" class="ghost-btn" id="btnClear">清空</button>
+          </div>
+        </div>
+        <div class="textarea-wrap">
+          <textarea id="textInput" placeholder="在此粘贴或输入要配音的文案…&#10;支持中英文，单次最长 1000 字符。" autofocus
+            aria-label="配音文案输入框"></textarea>
+        </div>
+        <div class="textarea-foot">
+          <span class="foot-note">支持中英文 · 单次最长 1000 字符 · Ctrl / Cmd + Enter 快捷合成</span>
+          <div class="text-counter">
+            <span id="charCount" class="mono num">0</span>
+            <span class="counter-sep">/</span>
+            <span class="mono num">1000</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ③ 声音调节 -->
+      <div class="card panel-tune anim-rise" style="--d:1">
+        <div class="card-head">
+          <h2 class="card-title"><span class="title-dot" aria-hidden="true"></span>声音调节</h2>
+          <span class="head-hint">双击滑块可复位</span>
+        </div>
+
+        <div class="slider-row">
+          <div class="slider-label">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M11 3 6 9h3l-1 6 6-7h-3l1-5h-1Z" fill="currentColor"/></svg>音量
+          </div>
+          <input type="range" id="volumeSlider" class="range" min="0.1" max="2" step="0.1" value="1" aria-label="音量，范围 0.1 到 2.0" />
+          <output id="volumeValue" class="slider-value mono num" for="volumeSlider">1.0</output>
+        </div>
+
+        <div class="slider-row">
+          <div class="slider-label">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M13 3H7l1 5H5l2.5 4H6l4 5 1.5-5H10l2.5-4H10l1-5h1Z" fill="currentColor" transform="translate(1 0)"/></svg>语速
+          </div>
+          <input type="range" id="speedSlider" class="range" min="0.5" max="2" step="0.1" value="1" aria-label="语速，范围 0.5 到 2.0" />
+          <output id="speedValue" class="slider-value mono num" for="speedSlider">1.0</output>
+        </div>
+
+        <!-- 高级选项 -->
+        <details class="advanced" id="advancedPanel">
+          <summary>
+            <svg class="chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            高级选项
+            <span class="advanced-hint">格式 · 采样率 · 语言/情绪/风格</span>
+          </summary>
+          <div class="advanced-body">
+            <div class="field-row">
+              <div class="field">
+                <label for="formatSelect">输出格式</label>
+                <select id="formatSelect" aria-label="输出格式">
+                  <option value="mp3">MP3（推荐）</option>
+                  <option value="wav">WAV（无损）</option>
+                  <option value="flac">FLAC（无损压缩）</option>
+                  <option value="opus">Opus（低码率）</option>
+                  <option value="pcm">PCM（原始流，仅下载）</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="sampleRateSelect">采样率</label>
+                <select id="sampleRateSelect" aria-label="采样率">
+                  <option value="8000">8 000 Hz</option>
+                  <option value="16000">16 000 Hz</option>
+                  <option value="22050">22 050 Hz</option>
+                  <option value="24000" selected>24 000 Hz</option>
+                  <option value="48000">48 000 Hz</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field">
+              <label id="voiceLabelTitle">音色标签（语言 / 情绪 / 风格 三选一）</label>
+              <div class="vl-type" role="radiogroup" aria-labelledby="voiceLabelTitle">
+                <button type="button" class="vl-type-btn active" data-vl-type="none" aria-pressed="true">不指定</button>
+                <button type="button" class="vl-type-btn" data-vl-type="language" aria-pressed="false">语言</button>
+                <button type="button" class="vl-type-btn" data-vl-type="emotion" aria-pressed="false">情绪</button>
+                <button type="button" class="vl-type-btn" data-vl-type="style" aria-pressed="false">风格</button>
+              </div>
+              <select id="voiceLabelValue" aria-label="音色标签取值" disabled>
+                <option value="">— 请选择 —</option>
+              </select>
+              <p class="field-note">官方约束：language / emotion / style 每次仅允许一个生效，提交时只发送所选组。</p>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <!-- ④ 合成操作 -->
+      <div class="card panel-action anim-rise" style="--d:2">
+        <div class="card-head">
+          <h2 class="card-title"><span class="title-dot" aria-hidden="true"></span>合成配音</h2>
+          <span class="head-hint">Ctrl / Cmd + Enter 快捷合成</span>
+        </div>
+
+        <div class="action-summary">
+          <div class="summary-item">
+            <span class="summary-label">当前音色</span>
+            <span class="summary-value" id="summaryVoice">经典女声</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">音量</span>
+            <span class="summary-value mono num" id="summaryVolume">1.0</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">语速</span>
+            <span class="summary-value mono num" id="summarySpeed">1.0</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">输出</span>
+            <span class="summary-value mono" id="summaryFormat">MP3 · 24k</span>
+          </div>
+        </div>
+
+        <div class="action-footer">
+          <div class="action-status">
+            <span class="status-text" id="statusText">
+              <span class="status-ready" id="statusReady">就绪 · 预计消耗 <b class="mono num" id="estimateChars">0</b> 字符<em id="estimateCost"></em></span>
+              <span class="status-custom" id="statusCustom" hidden></span>
+            </span>
+            <span class="action-tip">2.5 元 / 万字符 · 音色试听同样计费</span>
+          </div>
+          <button type="button" class="synthesize-btn" id="btnSynthesize">
+            <span class="btn-label">
+              <svg class="icon-headphone" viewBox="0 0 20 20" aria-hidden="true"><path d="M3.8 9.6V9a6.2 6.2 0 0 1 12.4 0v.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><rect x="2.4" y="9.2" width="3.4" height="5.6" rx="1.7" fill="currentColor"/><rect x="14.2" y="9.2" width="3.4" height="5.6" rx="1.7" fill="currentColor"/></svg>
+              <span id="synthesizeLabel">合成配音</span>
+            </span>
+            <span class="btn-eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 右列：提示 + 音色选择 ── -->
+    <section class="col-right">
+
+      <!-- API Key 提示区块 -->
+      <div class="card key-notice anim-rise" id="keyNotice" style="--d:2">
+        <span class="notice-icon" aria-hidden="true">
+          <svg viewBox="0 0 20 20">
+            <circle cx="7.2" cy="7.2" r="3.7" fill="none" stroke="currentColor" stroke-width="1.7"/>
+            <path d="m9.9 9.9 4.6 4.6M12.4 12.4l1.5-1.5M14.4 14.4l1.5-1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <div class="notice-body">
+          <p class="notice-title" id="noticeTitle">还没有配置 API Key</p>
+          <p class="notice-text" id="noticeText">在「设置」里填入 StepFun API Key，即可开始使用配音服务。</p>
+          <div class="notice-actions">
+            <p class="notice-foot">
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.8 2.6 4.2v4c0 3.2 2.3 5.6 5.4 6.4 3.1-.8 5.4-3.2 5.4-6.4v-4L8 1.8Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="m5.8 8.2 1.5 1.5 3-3.2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              数据只存本机浏览器，不上传服务器
+            </p>
+            <button type="button" class="primary-btn-sm notice-btn" id="btnNoticeSettings">去设置</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card panel-voices anim-rise" style="--d:3">
+        <div class="card-head">
+          <h2 class="card-title"><span class="title-dot" aria-hidden="true"></span>选择音色</h2>
+          <span class="head-hint" id="voiceCount">36 个音色</span>
+        </div>
+
+        <div class="voice-tools">
+          <div class="search-box">
+            <svg viewBox="0 0 18 18" aria-hidden="true"><circle cx="8" cy="8" r="5.4" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m12.5 12.5 3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <input type="search" id="voiceSearch" placeholder="搜索音色名称或 ID…" aria-label="搜索音色" autocomplete="off" />
+          </div>
+          <div class="filter-tabs" role="tablist" aria-label="音色筛选" id="filterTabs">
+            <button type="button" class="filter-tab active" data-group="all" role="tab" aria-selected="true">全部</button>
+            <button type="button" class="filter-tab" data-group="male" role="tab" aria-selected="false">男声</button>
+            <button type="button" class="filter-tab" data-group="female" role="tab" aria-selected="false">女声</button>
+            <button type="button" class="filter-tab" data-group="youshengshu" role="tab" aria-selected="false">有声书</button>
+            <button type="button" class="filter-tab" data-group="xuniren" role="tab" aria-selected="false">虚拟人</button>
+          </div>
+        </div>
+
+        <div class="voice-grid" id="voiceGrid" aria-live="polite">
+          <!-- 音色卡片由 app.js 渲染 -->
+        </div>
+        <div class="voice-empty" id="voiceEmpty" hidden>
+          <svg viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="7.6" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".45"/><path d="m8.2 8.2 5.6 5.6M13.8 8.2l-5.6 5.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".45"/></svg>
+          没有匹配的音色，试试其他关键词
+        </div>
+
+        <div class="custom-voice">
+          <label for="customVoiceInput">
+            <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M9 2.2a3.2 3.2 0 0 1 3.2 3.2v3.4a3.2 3.2 0 0 1-6.4 0V5.4A3.2 3.2 0 0 1 9 2.2Z" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M3.6 8.6v.4a5.4 5.4 0 0 0 10.8 0v-.4M9 14.6v1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            自定义音色 ID
+          </label>
+          <input type="text" id="customVoiceInput" placeholder="输入官方列表之外的音色 ID，回车应用" spellcheck="false" autocomplete="off" />
+          <p class="field-note">填入后将优先于上方选中的音色；清空输入框即恢复选择。</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ═══════════════ ⑤ 试听播放器 ═══════════════ -->
+  <section class="player-shell" id="playerShell" hidden aria-label="试听播放器">
+    <div class="card player">
+      <div class="player-main">
+        <button type="button" class="play-btn" id="playBtn" aria-label="播放或暂停">
+          <svg class="icon-play" viewBox="0 0 22 22" aria-hidden="true"><path d="M7 4.8v12.4c0 .8.9 1.3 1.6.9l9.5-6.2c.6-.4.6-1.4 0-1.8L8.6 3.9c-.7-.4-1.6.1-1.6.9Z" fill="currentColor"/></svg>
+          <svg class="icon-pause" viewBox="0 0 22 22" aria-hidden="true"><rect x="5.5" y="4.5" width="4" height="13" rx="1.4" fill="currentColor"/><rect x="12.5" y="4.5" width="4" height="13" rx="1.4" fill="currentColor"/></svg>
+        </button>
+
+        <div class="player-center">
+          <div class="player-title-row">
+            <span class="player-name" id="playerName">—</span>
+            <div class="eq" id="playerEq" aria-hidden="true">
+              <i></i><i></i><i></i><i></i><i></i>
+            </div>
+            <span class="player-time mono num"><span id="timeCurrent">00:00</span> / <span id="timeTotal">00:00</span></span>
+          </div>
+          <div class="progress" id="progressBar" role="slider" aria-label="播放进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0">
+            <div class="progress-buffer" aria-hidden="true"></div>
+            <div class="progress-fill" aria-hidden="true"><span class="progress-thumb"></span></div>
+          </div>
+        </div>
+
+        <div class="player-actions">
+          <button type="button" class="ghost-btn" id="btnReplay" title="回到开头重新播放" aria-label="重新播放">
+            <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M3.2 8V3.6M3.2 8h4.4M3.2 8a6 6 0 1 1 1.4 5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            重播
+          </button>
+          <button type="button" class="download-btn" id="btnDownload" aria-label="下载音频文件">
+            <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M9 2.6v9M5.4 8.2 9 11.8l3.6-3.6M3 14.2h12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            下载
+          </button>
+        </div>
+      </div>
+      <p class="player-note" id="playerNote" hidden></p>
+    </div>
+  </section>
+
+  <!-- ═══════════════ 设置弹窗 ═══════════════ -->
+  <div class="modal-backdrop" id="settingsModal" hidden>
+    <div class="modal card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <div class="modal-head">
+        <h2 id="settingsTitle">
+          <svg viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="2.4" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M9 1.6v2M9 14.4v2M16.4 9h-2M3.6 9h-2M14.6 3.4l-1.5 1.5M4.9 13.1l-1.5 1.5M14.6 14.6l-1.5-1.5M4.9 4.9 3.4 3.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          设置
+        </h2>
+        <button type="button" class="close-btn" id="btnCloseSettings" aria-label="关闭设置">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 4 8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- API Key -->
+        <div class="field">
+          <div class="label-row">
+            <label for="apiKeyInput">StepFun API Key <span class="req">*</span></label>
+            <a class="ext-link" href="https://platform.stepfun.com/interface-key" target="_blank" rel="noopener noreferrer">
+              获取 API Key
+              <svg viewBox="0 0 14 14" aria-hidden="true"><path d="M5.6 2.6H2.9a.9.9 0 0 0-.9.9v7.6a.9.9 0 0 0 .9.9h7.6a.9.9 0 0 0 .9-.9V8.4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M8.4 2.1h3.5v3.5M11.6 2.4 6.8 7.2" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </a>
+          </div>
+          <div class="key-row">
+            <input type="password" id="apiKeyInput" placeholder="粘贴你的 API Key" spellcheck="false" autocomplete="off" />
+            <button type="button" class="ghost-btn" id="btnToggleKey" aria-label="切换明文显示">显示</button>
+          </div>
+          <div class="key-row-2">
+            <button type="button" class="primary-btn-sm" id="btnSaveKey">验证并保存</button>
+            <button type="button" class="ghost-btn" id="btnClearKey">清除 Key</button>
+            <span class="key-status mono" id="keyStatus"></span>
+          </div>
+          <p class="field-note">
+            验证会发起一次极短文本的合成请求（约 5 字符，费用可忽略）。也可直接保存，合成时再校验。
+          </p>
+        </div>
+
+        <!-- API 地址 -->
+        <div class="field">
+          <label for="apiBaseInput">API 地址 <span class="opt">高级 · 一般不用改</span></label>
+          <input type="text" id="apiBaseInput" class="mono" placeholder="https://api.stepfun.com" spellcheck="false" autocomplete="off" />
+          <p class="field-note">默认官方接口；网络受限时可改为自建反向代理地址（需自行处理 CORS）。</p>
+        </div>
+
+        <!-- 试听提示语 -->
+        <div class="field">
+          <label for="previewTextInput">音色试听提示语</label>
+          <input type="text" id="previewTextInput" placeholder="你好，这是魔音工坊的音色试听。" maxlength="100" />
+          <p class="field-note">点击音色卡片上的试听按钮时使用的短句，建议 15 字以内以节省费用。</p>
+        </div>
+
+        <!-- 自动试播 -->
+        <div class="field switch-field">
+          <div class="switch-text">
+            <label for="autoPlaySwitch" class="switch-label">合成完成后自动播放</label>
+            <p class="field-note">默认关闭；移动端浏览器可能限制自动播放，建议保持关闭。</p>
+          </div>
+          <button type="button" class="switch" id="autoPlaySwitch" role="switch" aria-checked="false" aria-label="合成完成后自动播放">
+            <span class="switch-knob"></span>
+          </button>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- 清空数据 -->
+        <div class="field danger-field">
+          <div class="danger-text">
+            <span class="danger-title">清空本地数据</span>
+            <p class="field-note">删除 API Key、偏好设置与全部历史记录，不可恢复。</p>
+          </div>
+          <button type="button" class="danger-btn" id="btnWipeData">清空</button>
+        </div>
+
+        <p class="risk-note">
+          <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M9 2 1.6 15.4h14.8L9 2Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M9 7v4.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="9" cy="13.4" r=".8" fill="currentColor"/></svg>
+          API Key 仅保存在你本机浏览器的 localStorage 中，只随合成请求发送给阶跃星辰官方接口，本站不采集、不上传任何数据。
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ 历史记录抽屉 ═══════════════ -->
+  <div class="drawer-backdrop" id="historyDrawer" hidden>
+    <aside class="drawer card" role="dialog" aria-modal="true" aria-labelledby="historyTitle">
+      <div class="modal-head">
+        <h2 id="historyTitle">
+          <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M9 3.4v5.2l3.4 1.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 15.8a6.8 6.8 0 1 1 6.8-6.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M15.8 2.6v3.2h-3.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          历史记录 <span class="head-hint" id="historyCount">0 条</span>
+        </h2>
+        <button type="button" class="close-btn" id="btnCloseHistory" aria-label="关闭历史记录">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 4 8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div class="drawer-body" id="historyList">
+        <!-- 历史条目由 app.js 渲染 -->
+      </div>
+      <div class="drawer-empty" id="historyEmpty">
+        <svg viewBox="0 0 22 22" aria-hidden="true"><path d="M4 7.6h14v9.8H4zM4 7.6 6 4h10l2 3.6M9 12h4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/></svg>
+        暂无合成记录，去合成第一条配音吧
+      </div>
+    </aside>
+  </div>
+
+  <!-- ═══════════════ Toast ═══════════════ -->
+  <div class="toast-region" id="toastRegion" role="status" aria-live="polite"></div>
+
+  <footer class="footer">
+    <p>魔音工坊 · 纯本地运行的 AI 配音工具 — 数据只存你的浏览器，合成直达 <span class="mono">api.stepfun.com</span></p>
+    <p class="footer-sub">本站与阶跃星辰无隶属关系 · 计费 2.5 元 / 万字符（以平台为准）</p>
+  </footer>
+
+  <audio id="audioElement" preload="metadata"></audio>
+
+  <script src="voices.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
