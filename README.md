@@ -4,6 +4,9 @@
 > 粘贴文案 → 选音色 → 调音量语速 → 一键合成 → 试听并下载。
 > 底层调用阶跃星辰（StepFun）`stepaudio-3-tts` 模型的 `POST /v1/audio/speech` 接口。
 
+
+>  ### 在线访问体验：https://steptts3.netlify.app/
+
 **零依赖 · 零构建 · 可离线打开（仅合成请求需要联网）**
 
 ![首页](./screenshots/01-首页.png)
